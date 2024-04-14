@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for Lambda, SQS, Lambda-SQS mapping, and DynamoDB tables
+
+Resources:
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role:
+        Fn::Sub: "arn:aws:iam::323307001570:role/LabRole"
+      Code:
+        ZipFile: |
+          import boto3
+          def handler_for_lambda(event, context):
+              # Your Lambda function code here
+              pass
+      Runtime: python3.8
+  
+  MySQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: MySQSQueues211100
+
+  EntryDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: EntryDynamoDBTables211100
+      AttributeDefinitions:
+        - AttributeName: image_name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: image_name
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  VehicleDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VehicleDynamoDBTables211100
+      AttributeDefinitions:
+        - AttributeName: vehicle_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: vehicle_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  LambdaSQSMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      Enabled: true
+      EventSourceArn: !GetAtt arn:aws:sqs:us-east-1:323307001570:MySQSQueues211100
+      FunctionName: !GetAtt arn:aws:lambda:us-east-1:323307001570:function:myStackName-MyLambdaFunction-l7oP3ZWmRmPU
+
+
+  # LambdaExecutionRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: lambda.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Policies:
+  #       - PolicyName: LambdaExecutionPolicy
+  #         PolicyDocument:
+  #           Version: '2012-10-17'
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - logs:CreateLogGroup
+  #                 - logs:CreateLogStream
+  #                 - logs:PutLogEvents
+  #               Resource: arn:aws:logs:*:*:*
+
+  # LambdaSQSPermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties:
+  #     FunctionName: !GetAtt MyLambdaFunction.Arn
+  #     Action: lambda:InvokeFunction
+  #     Principal: sns.amazonaws.com
+  #     SourceArn: !GetAtt MySQSQueue.Arn
+
+  
